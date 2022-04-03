@@ -1,6 +1,7 @@
 import numpy as np
 import requests
 from datetime import date, datetime
+from markupsafe import escape
  
 
 class Metrics:
