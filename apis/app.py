@@ -6,6 +6,19 @@ import json
 
 app = Flask(__name__)
 
+
+@app.route("/getCustomerIdentification/<customerId>/<organizationId>")
+def getCustomerIdentification(customerId,organizationId):
+    headers = {
+        "customerId": customerId,
+        "organizationId": organizationId,
+    }
+    requestUrl = "https://challenge.hackathonbtg.com/customers/v1/personal/identifications"
+    responseJson = requests.get(requestUrl, headers=headers)
+    customerIdentification = {}
+    customerIdentification['age'] = responseJson['data']['birthDate']
+    return customerIdentification
+
 @app.route("/getCustomerQualification/<customerId>/<organizationId>")
 def getCustomerQualification(customerId,organizationId):
     headers = {
@@ -16,7 +29,11 @@ def getCustomerQualification(customerId,organizationId):
     requestUrl = "https://challenge.hackathonbtg.com/customers/v1/personal/qualifications"
     print(requestUrl)
     response = requests.get(requestUrl, headers = headers)
-    return response.json()
+    responseJson = response.json()
+    customerQualification = {}
+    customerQualification['informedIncome'] = responseJson["data"]["informedIncome"]["amount"]
+    customerQualification['informedPatrimony'] = responseJson["data"]["informedPatrimony"]["amount"]
+    return customerQualification
 
 @app.route("/getAccountTransactions/<customerId>/<organizationId>/<accountId>/<fromBookingDate>")
 def getAccountTransactions(customerId,organizationId,accountId,fromBookingDate):
@@ -32,23 +49,26 @@ def getAccountTransactions(customerId,organizationId,accountId,fromBookingDate):
 
     return response.json()
 
-@app.route("/getCustomerIdentification/<customerId>/<organizationId>")
-def getCustomerIdentification(customerId,organizationId):
+@app.route("/getCreditCardLimit/<customerId>/<organizationId>/<creditCardAccountId>")
+def defineCustomerProfile(customerId, organizationId, creditCardAccountId):
     headers = {
+        "accept": "application/json",
         "customerId": customerId,
         "organizationId": organizationId,
     }
-    requestUrl = "https://challenge.hackathonbtg.com/customers/v1/personal/identifications"
+    requestUrl = "https://challenge.hackathonbtg.com/credit-cards-accounts/v1/accounts/{creditCardAccountId}/limits".format(creditCardAccountId = creditCardAccountId)
     response = requests.get(requestUrl, headers=headers)
-    return response.json()
+    responseJson = response.json()
+    print(responseJson)
+    creditCardLimit = {
+        'limitAmount': 0,
+        'usedAmount': 0
+    }
+    for limit in responseJson["data"]:
+        creditCardLimit['limitAmount'] += limit["limitAmount"]
+        creditCardLimit['usedAmount'] += limit["usedAmount"]
     
-
-@app.route("/defineCustomerProfile")
-def defineCustomerProfile():
-    title = request.json["title"]
-    body = request.json["body"]
-
-    return jsonify({"title": title, "body": body})
+    return creditCardLimit
 
 if __name__ == "__main__":
     # app.run(debug = True)
