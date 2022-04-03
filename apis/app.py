@@ -2,13 +2,57 @@ from flask import Flask, jsonify, request
 import requests
 import os
 import json
-
+import sys
+sys.path.insert(0, '../models/')
+from metrics import Metrics
+from portfolio import Portfolio
 
 app = Flask(__name__)
 
+@app.route("/calculateCustomerPortfolio/<customerId>/<organizationId>")
+def calculateCustomerPortfolio(customerId,organizationId):
+    # pegar os dados do cliente
+    customer = Metrics.getCustomerInformation(Metrics, customerId, organizationId)
+
+    print("customer")
+
+    print(customer)
+
+    # chamar Metrics.calculateCustomerMetrics() com esse dados
+    metricsUnion = Metrics.calculateCustomerMetrics(Metrics, customer)
+
+    portfolio = Portfolio.defineCustomerPortfolio(Portfolio, metricsUnion)
+
+    return portfolio
+
+
+@app.route("/getAccountId/<customerId>/<organizationId>")
+def getAccountIdAPI(customerId,organizationId):
+    headers = {
+        "customerId": customerId,
+        "organizationId": organizationId,
+    }
+    requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/"
+    responseJson = requests.get(requestUrl, headers=headers)
+    account = {}
+    account['accountId'] = responseJson['data'][0]['accountId']
+    return account
+
+@app.route("/getCreditCardAccountId/<customerId>/<organizationId>")
+def getCreditCardAccountIdAPI(customerId,organizationId):
+    headers = {
+        "customerId": customerId,
+        "organizationId": organizationId,
+    }
+    requestUrl = "https://challenge.hackathonbtg.com/credit-cards-accounts/v1/accounts/"
+    responseJson = requests.get(requestUrl, headers=headers)
+    creditCard = {}
+    creditCard['creditCardAccountId'] = responseJson['data'][0]['creditCardAccountId']
+    return creditCard
+
 
 @app.route("/getCustomerIdentification/<customerId>/<organizationId>")
-def getCustomerIdentification(customerId,organizationId):
+def getCustomerIdentificationAPI(customerId,organizationId):
     headers = {
         "customerId": customerId,
         "organizationId": organizationId,
@@ -20,7 +64,7 @@ def getCustomerIdentification(customerId,organizationId):
     return customerIdentification
 
 @app.route("/getCustomerQualification/<customerId>/<organizationId>")
-def getCustomerQualification(customerId,organizationId):
+def getCustomerQualificationAPI(customerId,organizationId):
     headers = {
         "accept": "application/json",
         "customerId": customerId,
@@ -36,7 +80,7 @@ def getCustomerQualification(customerId,organizationId):
     return customerQualification
 
 @app.route("/getAccountTransactions/<customerId>/<organizationId>/<accountId>/<fromBookingDate>")
-def getAccountTransactions(customerId,organizationId,accountId,fromBookingDate):
+def getAccountTransactionsAPI(customerId,organizationId,accountId,fromBookingDate):
     parameters = {
         "fromBookingDate": fromBookingDate,
     }
@@ -50,7 +94,7 @@ def getAccountTransactions(customerId,organizationId,accountId,fromBookingDate):
     return response.json()
 
 @app.route("/getCreditCardLimit/<customerId>/<organizationId>/<creditCardAccountId>")
-def defineCustomerProfile(customerId, organizationId, creditCardAccountId):
+def getCreditCardLimitAPI(customerId, organizationId, creditCardAccountId):
     headers = {
         "accept": "application/json",
         "customerId": customerId,

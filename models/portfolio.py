@@ -8,7 +8,7 @@ class Portfolio:
         pass
     
     def getFundsList(self, file):
-        self.fundsList = pd.read_csv(file)
+        return pd.read_csv(file)
     
     def defineFundLiquidity(liquidityDays):
         liquidity = 0
@@ -20,21 +20,25 @@ class Portfolio:
             liquidity = 1
         return liquidity
     
-    def calculateFundsMetrics(self):
+    def calculateFundsMetrics(self, fundsList):
         fundsMetrics = []
-        for i in range(len(self.fundsList)):
+        for i in range(len(fundsList)):
             fundMetrics = {}
-            fundMetrics['fund'] = self.fundsList.iloc[i]['Fundo']
-            fundMetrics['liquidity'] = self.defineFundLiquidity(self.fundsList.iloc[i]['Liquidez dias'])
-            fundMetrics['risk'] = self.fundsList.iloc[i]['Risco']
-            fundMetrics['isCripto'] = self.fundsList.iloc[i]['Cripto']
-            fundMetrics['isESG'] = self.fundsList.iloc[i]['ESG']
+            fundMetrics['fund'] = fundsList.iloc[i]['Fundo']
+            fundMetrics['liquidity'] = self.defineFundLiquidity(fundsList.iloc[i]['Liquidez dias'])
+            fundMetrics['risk'] = fundsList.iloc[i]['Risco']
+            fundMetrics['isCripto'] = fundsList.iloc[i]['Cripto']
+            fundMetrics['isESG'] = fundsList.iloc[i]['ESG']
             fundsMetrics.append(fundMetrics)
+        return fundsMetrics
     
     def calculateAverageMetricValue(metricValues):
         sumMetrics = sum(filter(None, metricValues))
         numberNotNone = sum(x is not None for x in metricValues)
-        average = sumMetrics/numberNotNone
+        if (numberNotNone != 0):
+            average = sumMetrics/numberNotNone
+        else:
+            average = sumMetrics
         return average
 
     def defineCustomerProfile(self, metricsUnion):
@@ -62,26 +66,49 @@ class Portfolio:
             # print("distance between (", customerLiquidity, ", ", customerRisk, ") and ", "(", float(fund['liquidity']), ", ", float(fund['risk']), ") is ", euclideanDistance)
             distancesFundsCustomers[fund['fund']] = euclideanDistance
         k = 5
-        fundsPortfolio = dict(sorted(distancesFundsCustomers.items(), key = itemgetter(1))[:k])
-        return fundsPortfolio
+        bestFunds = dict(sorted(distancesFundsCustomers.items(), key = itemgetter(1))[:k])
+        return bestFunds
+    
+    def createFundsPortfolio(self, bestFunds):
+        portfolio = []
 
-    def defineCustomerPortfolio(profile, fundsMetrics):
-        pass
+        distancesSum = sum(bestFunds.values())
+        positionsSum = 0
+        for key in bestFunds.keys():
+            fund = {
+                'fund': key,
+            }
+            position = (1/bestFunds[key])*distancesSum
+            fund['position'] = position
+            positionsSum += position
+            portfolio.append(fund)
 
-    def testCase():
-        # pegar os dados do cliente
+        multiplicationFactor = 100/positionsSum
 
-        # chamar Metrics.calculateAllMetrics() com esse dados
+        for fund in portfolio:
+            fund['position'] = fund['position']*multiplicationFactor
+        
+        return portfolio
 
-        # calcular perfil - defineCustomerProfile
+    def defineCustomerPortfolio(self, customerMetricsUnion):
+        # define customer profile
+        customerProfile = self.defineCustomerProfile(self, customerMetricsUnion)
 
-        # importar e calcular metricas do fundo - calculateFundsMetrics
+        # import and calculate funds metrics
+        fundsList = self.getFundsList(self, "../data/btg_funds_list.csv")
+        fundsMetrics = self.calculateFundsMetrics(self, fundsList)
 
         # quais sao os x ativos mais proximos da pessoa? distancia euclidiana em risco e liquidez - findBestFunds
+        bestFunds = self.findBestFunds(self, customerProfile, fundsMetrics)
 
-        # dependendo da tendencia cripto, colocar um pouco em crito
-        return 
-    
-    testCase()
+        fundsPortfolio = self.createFundsPortfolio(self, bestFunds)
+
+        print(type(fundsPortfolio))
+
+        customerPortfolio = {
+            "portfolio": fundsPortfolio
+        }
+
+        return customerPortfolio
 
 
