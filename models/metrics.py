@@ -1,7 +1,9 @@
+import numpy as np
+
 class Metrics:
     def __init__(self):
         pass
-    def calculateAgeImpact(ageInfo):
+    def calculateAgeImpact(self, ageInfo):
         age = ageInfo['age']
         metrics = {
             'risk': None,
@@ -21,11 +23,14 @@ class Metrics:
         elif (18 <= age <= 24):
             metrics['criptoTendency'] = 0.103
 
-        metrics['risk'] = (100-age)/2
+        metrics['risk'] = (100-age)/200
 
         return metrics
     
-    def calculatePatrimonyOnIncomeImpact(qualificationInfo):
+    def calculateSigmoid(x):
+        return 1/(1+np.exp(-(1/x)))
+    
+    def calculatePatrimonyOnIncomeImpact(self, qualificationInfo):
         patrimony = qualificationInfo['patrimony']
         income = qualificationInfo['income']
         metrics = {
@@ -35,22 +40,28 @@ class Metrics:
         }
         patrimonyOnIncome = patrimony/income
         
-        # The bigger the proportion of patrimony in relation to mensal income,
-        # the lower the need to high liquidity]
+        # The higher the proportion of patrimony in relation to mensal income,
+        # the lower the need to high liquidity
         
-        if (patrimonyOnIncome != 0):
-            metrics['liquidity'] = 1/patrimonyOnIncome
+        # In order to normalize the liquidity metric between 0 and 1, we use the sigmoid function
+        # As the sigmoid function has a sharp curve, it's a good function to represent
+        # liquidity, since we'll use this value to recommend funds with liquidity
+        # classified with integer values between 1 and 3
         
-        # The bigger the proportion of patrimony in relation to mensal income,
-        # the bigger the tendency to be exposed to greater risk
+        metrics['liquidity'] = (self.calculateSigmoid(patrimonyOnIncome)-0.5)*2
+            
         
-        risk = -(1 - patrimonyOnIncome)/patrimonyOnIncome # MUDARRRRR
-        # normalize between 0 and 1
-        metrics['risk'] = (risk - 0)/1
+        print(metrics['liquidity'])
+        # The higher the proportion of patrimony in relation to mensal income,
+        # the higher the tendency to be able to be exposed to greater risk
+        
+        metrics['risk'] = 1-(self.calculateSigmoid(patrimonyOnIncome)-0.5)*2
+        
+        print(metrics['risk'])
         
         return metrics
 
-    def calculateCreditLimitImpact(limitInfo):
+    def calculateCreditLimitImpact(self, limitInfo):
         limitAmount = limitInfo['limitAmount']
         usedAmount = limitInfo['usedAmount']
         
@@ -68,25 +79,22 @@ class Metrics:
         
         return metrics
     
-    def appendMetrics(metricsUnion, calculateImpact, **kwargs):
-        metrics = calculateImpact(kwargs)
+    def appendMetrics(self, metricsUnion, calculateImpact, **kwargs):
+        metrics = calculateImpact(self, kwargs)
         for key in metricsUnion.keys():
             if (key in metrics):
                 metricsUnion[key].append(metrics[key])
         return metricsUnion
 
-    def callAllMetrics(self, age, patrimony, income, limitAmount, usedAmount):
+    def calculateAllMetrics(self, age, patrimony, income, limitAmount, usedAmount):
         metricsUnion = {
             'risk': [],
             'liquidity': [],
             'criptoTendency': [],
         }
         
-        self.appendMetrics(metricsUnion,self.calculateAgeImpact, age = age)
-        self.appendMetrics(metricsUnion,self.calculateCreditLimitImpact, limitAmount = limitAmount, usedAmount = usedAmount)
-        self.appendMetrics(metricsUnion,self.calculatePatrimonyOnIncomeImpact, patrimony = patrimony, income = income)
+        self.appendMetrics(self, metricsUnion,self.calculateAgeImpact, age = age)
+        self.appendMetrics(self, metricsUnion,self.calculateCreditLimitImpact, limitAmount = limitAmount, usedAmount = usedAmount)
+        self.appendMetrics(self, metricsUnion,self.calculatePatrimonyOnIncomeImpact, patrimony = patrimony, income = income)
         
         return metricsUnion
-
-    def testCase():
-        return Metrics.callAllMetrics(Metrics,18, 1000, 100, 300, 150)
