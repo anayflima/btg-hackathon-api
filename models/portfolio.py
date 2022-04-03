@@ -2,6 +2,8 @@ from metrics import Metrics
 import pandas as pd
 from operator import itemgetter
 import math
+import sys
+sys.path.insert(0, './')
 
 class Portfolio:
     def __init__(self):
@@ -95,7 +97,7 @@ class Portfolio:
         customerProfile = self.defineCustomerProfile(self, customerMetricsUnion)
 
         # import and calculate funds metrics
-        fundsList = self.getFundsList(self, "../data/btg_funds_list.csv")
+        fundsList = self.getFundsList(self, "./btg_funds_list.csv")
         fundsMetrics = self.calculateFundsMetrics(self, fundsList)
 
         # quais sao os x ativos mais proximos da pessoa? distancia euclidiana em risco e liquidez - findBestFunds
