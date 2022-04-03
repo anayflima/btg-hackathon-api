@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 import requests
 import os
-import urllib.request
+import json
 
 
 app = Flask(__name__)
@@ -9,19 +9,14 @@ app = Flask(__name__)
 @app.route("/getCustomerQualification/<customerId>/<organizationId>")
 def getCustomerQualification(customerId,organizationId):
     headers = {
-        'accept': 'application/json',
+        "accept": "application/json",
         "customerId": customerId,
         "organizationId": organizationId,
     }
     requestUrl = "https://challenge.hackathonbtg.com/customers/v1/personal/qualifications"
     print(requestUrl)
-    # response = requests.get(requestUrl, headers = headers)
-    req = urllib.request.Request(url=requestUrl,headers = headers)
-    with urllib.request.urlopen(req) as response:
-        the_page = response.read()
-    print("RESPONSE HEADERS = ", req.headers)
-    print("RESPONSE = ", the_page)
-    return the_page
+    response = requests.get(requestUrl, headers = headers)
+    return response.json()
 
 @app.route("/getAccountTransactions/<customerId>/<organizationId>/<accountId>/<fromBookingDate>")
 def getAccountTransactions(customerId,organizationId,accountId,fromBookingDate):
@@ -29,15 +24,24 @@ def getAccountTransactions(customerId,organizationId,accountId,fromBookingDate):
         "fromBookingDate": fromBookingDate,
     }
     headers = {
+        "customerId":customerId,
+        "organizationId": organizationId
+    }
+    requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/{accountId}/transactions".format(accountId = accountId)
+    response = requests.get(requestUrl, headers=headers, params = parameters)
+
+    return response.json()
+
+@app.route("/getCustomerIdentification/<customerId>/<organizationId>")
+def getCustomerIdentification(customerId,organizationId):
+    headers = {
         "customerId": customerId,
         "organizationId": organizationId,
     }
-    requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/{accountId}/transactions".format(accountId = accountId)
-    print(requestUrl)
-    response = requests.get(requestUrl, headers = headers, params = parameters)
-    print("RESPONSE HEADERS = ", response.headers)
-    print("RESPONSE = ", response.json())
+    requestUrl = "https://challenge.hackathonbtg.com/customers/v1/personal/identifications"
+    response = requests.get(requestUrl, headers=headers)
     return response.json()
+    
 
 @app.route("/defineCustomerProfile")
 def defineCustomerProfile():
