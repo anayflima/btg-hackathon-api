@@ -11,9 +11,9 @@ import datetime
 import dateutil.relativedelta
 
 app = Flask(__name__)
-CORS(app)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-@app.route("/calculateCustomerPortfolio/<customerId>/<organizationId>")
+@app.route("/api/calculateCustomerPortfolio/<customerId>/<organizationId>")
 def calculateCustomerPortfolio(customerId,organizationId):
     # pegar os dados do cliente
     customer = Metrics.getCustomerInformation(Metrics, customerId, organizationId)
