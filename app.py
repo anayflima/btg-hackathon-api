@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import requests
 import os
 import json
@@ -10,6 +11,7 @@ import datetime
 import dateutil.relativedelta
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/calculateCustomerPortfolio/<customerId>/<organizationId>")
 def calculateCustomerPortfolio(customerId,organizationId):

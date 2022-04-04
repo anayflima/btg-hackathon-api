@@ -7,7 +7,7 @@ subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'requests'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pandas'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'numpy'])
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'python-math'])
-subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'python-math'])
+subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'flask-cors'])
 
 # process output with an API in the subprocess module:
 reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
