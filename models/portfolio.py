@@ -1,5 +1,6 @@
 from metrics import Metrics
 import pandas as pd
+import requests
 from operator import itemgetter
 import math
 import sys
@@ -22,13 +23,27 @@ class Portfolio:
             liquidity = 1
         return liquidity
     
+    def defineFundProfileRisk(risk):
+        profile = ""
+        if (risk == 1):
+            profile = "Conservador"
+        elif (risk == 2):
+            profile = "Moderado"
+        elif (risk == 3):
+            profile = "Agressivo"
+        return profile
+
+    
     def calculateFundsMetrics(self, fundsList):
         fundsMetrics = []
         for i in range(len(fundsList)):
             fundMetrics = {}
             fundMetrics['fund'] = fundsList.iloc[i]['Fundo']
             fundMetrics['liquidity'] = self.defineFundLiquidity(fundsList.iloc[i]['Liquidez dias'])
-            fundMetrics['risk'] = fundsList.iloc[i]['Risco']
+            fundMetrics['liquidityDays'] = int(fundsList.iloc[i]['Liquidez dias'])
+            fundMetrics['risk'] = int(fundsList.iloc[i]['Risco'])
+            fundMetrics['return'] = int(fundsList.iloc[i]['Rentabilidade'])
+            fundMetrics['riskProfile'] = self.defineFundProfileRisk(fundsList.iloc[i]['Risco'])
             fundMetrics['isCripto'] = fundsList.iloc[i]['Cripto']
             fundMetrics['isESG'] = fundsList.iloc[i]['ESG']
             fundsMetrics.append(fundMetrics)
@@ -60,39 +75,74 @@ class Portfolio:
 
     def findBestFunds(self, customer, fundsMetrics):
         distancesFundsCustomers = {}
+        funds = []
 
         for fund in fundsMetrics:
             customerLiquidity = float(self.transformRange(customer['liquidity']))
             customerRisk = float(self.transformRange(customer['risk']))
             euclideanDistance = self.calculateEuclideanDistance(float(fund['liquidity']), float(fund['risk']), customerLiquidity, customerRisk)
             # print("distance between (", customerLiquidity, ", ", customerRisk, ") and ", "(", float(fund['liquidity']), ", ", float(fund['risk']), ") is ", euclideanDistance)
+            
             distancesFundsCustomers[fund['fund']] = euclideanDistance
+
+            fundsInformation = {
+                'fund': fund['fund'],
+                'distance': euclideanDistance,
+                'liquidityDays':fund['liquidityDays'],
+                'riskProfile': fund['riskProfile'],
+                'return': fund['return'],
+            }
+            funds.append(fundsInformation)
         k = 5
-        bestFunds = dict(sorted(distancesFundsCustomers.items(), key = itemgetter(1))[:k])
+        bestFundsDistance = dict(sorted(distancesFundsCustomers.items(), key = itemgetter(1))[:k])
+        bestFunds = []
+        for fund in funds:
+            if (fund['fund'] in bestFundsDistance.keys()):
+                bestFunds.append(fund)
+
         return bestFunds
     
-    def createFundsPortfolio(self, bestFunds):
-        portfolio = []
 
-        distancesSum = sum(bestFunds.values())
+    def defineTotalInvestedAmount(customerId,organizationId,accountId,fromBookingDate):
+        parameters = {
+            "fromBookingDate": fromBookingDate,
+        }
+        headers = {
+            "customerId":customerId,
+            "organizationId": organizationId
+        }
+        requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/{accountId}/transactions".format(accountId = accountId)
+        response = requests.get(requestUrl, headers=headers, params = parameters)
+        responseJson = response.json()
+        sumTransactions = 0
+        for item in responseJson['data']:
+            sumTransactions += item ['amount']
+        return sumTransactions
+    
+    def defineAmountToInvest(patrimony, totalAmountTransactions):
+        availableAmount = patrimony - totalAmountTransactions
+        return availableAmount/4
+    
+    def createFundsPortfolio(self, bestFunds, amountToInvest):
+        distancesSum = 0
+        for fund in bestFunds:
+            distancesSum += fund['distance']
         positionsSum = 0
-        for key in bestFunds.keys():
-            fund = {
-                'fund': key,
-            }
-            position = (1/bestFunds[key])*distancesSum
+        for fund in bestFunds:
+            position = (1/fund['distance'])*distancesSum
             fund['position'] = position
             positionsSum += position
-            portfolio.append(fund)
 
         multiplicationFactor = 100/positionsSum
 
-        for fund in portfolio:
+        for fund in bestFunds:
             fund['position'] = fund['position']*multiplicationFactor
+            fund['amount'] = fund['position']*amountToInvest/100
         
-        return portfolio
+        return bestFunds
 
-    def defineCustomerPortfolio(self, customerMetricsUnion):
+
+    def defineCustomerPortfolio(self, customerMetricsUnion, informedPatrimony, totalAmountTransactions):
         # define customer profile
         customerProfile = self.defineCustomerProfile(self, customerMetricsUnion)
 
@@ -103,9 +153,11 @@ class Portfolio:
         # quais sao os x ativos mais proximos da pessoa? distancia euclidiana em risco e liquidez - findBestFunds
         bestFunds = self.findBestFunds(self, customerProfile, fundsMetrics)
 
-        fundsPortfolio = self.createFundsPortfolio(self, bestFunds)
+        amountToInvest = self.defineAmountToInvest(informedPatrimony, totalAmountTransactions)
 
-        print(type(fundsPortfolio))
+        fundsPortfolio = self.createFundsPortfolio(self, bestFunds, amountToInvest)
+
+        print(fundsPortfolio)
 
         customerPortfolio = {
             "portfolio": fundsPortfolio

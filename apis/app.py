@@ -79,7 +79,7 @@ def getCustomerQualificationAPI(customerId,organizationId):
     customerQualification['informedPatrimony'] = responseJson["data"]["informedPatrimony"]["amount"]
     return customerQualification
 
-@app.route("/getAccountTransactions/<customerId>/<organizationId>/<accountId>/<fromBookingDate>")
+@app.route("/getAccountTransactionsAPI/<customerId>/<organizationId>/<accountId>/<fromBookingDate>")
 def getAccountTransactionsAPI(customerId,organizationId,accountId,fromBookingDate):
     parameters = {
         "fromBookingDate": fromBookingDate,
@@ -90,8 +90,14 @@ def getAccountTransactionsAPI(customerId,organizationId,accountId,fromBookingDat
     }
     requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/{accountId}/transactions".format(accountId = accountId)
     response = requests.get(requestUrl, headers=headers, params = parameters)
-
-    return response.json()
+    responseJson = response.json()
+    sumTransactions = 0
+    for item in responseJson['data']:
+        sumTransactions += item ['amount']
+    sumAccountTransactions = {
+        'totalAmount': sumTransactions
+    }
+    return sumAccountTransactions
 
 @app.route("/getCreditCardLimit/<customerId>/<organizationId>/<creditCardAccountId>")
 def getCreditCardLimitAPI(customerId, organizationId, creditCardAccountId):

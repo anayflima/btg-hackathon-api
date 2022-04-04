@@ -6,6 +6,8 @@ import sys
 sys.path.insert(0, './models/')
 from metrics import Metrics
 from portfolio import Portfolio
+import datetime
+import dateutil.relativedelta
 
 app = Flask(__name__)
 
@@ -21,6 +23,15 @@ def calculateCustomerPortfolio(customerId,organizationId):
     # chamar Metrics.calculateCustomerMetrics() com esse dados
     metricsUnion = Metrics.calculateCustomerMetrics(Metrics, customer)
 
-    portfolio = Portfolio.defineCustomerPortfolio(Portfolio, metricsUnion)
+
+    now = datetime.datetime.now()
+    
+    fromBookingDate = (now + dateutil.relativedelta.relativedelta(months=-1)).strftime("%Y-%m-%d")
+
+    totalAmountTransactions = Portfolio.defineTotalInvestedAmount(customerId,
+        organizationId,customer['accountId'],fromBookingDate)
+
+    portfolio = Portfolio.defineCustomerPortfolio(Portfolio, metricsUnion,
+            customer['informedPatrimony'], totalAmountTransactions)
 
     return portfolio
