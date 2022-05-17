@@ -13,7 +13,7 @@ class Metrics:
         }
         requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/"
         responseJson = requests.get(requestUrl, headers=headers).json()
-        return responseJson['data'][0]['accountId']
+        return responseJson['data'][0]['personalId']
 
     def getCreditCardAccountId(customerId, organizationId):
         headers = {
