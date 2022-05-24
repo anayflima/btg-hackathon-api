@@ -111,12 +111,22 @@ class Portfolio:
             "customerId":customerId,
             "organizationId": organizationId
         }
-        requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/{accountId}/transactions".format(accountId = accountId)
-        response = requests.get(requestUrl, headers=headers, params = parameters)
-        responseJson = response.json()
-        sumTransactions = 0
-        for item in responseJson['data']:
-            sumTransactions += item ['amount']
+
+
+        # requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/{accountId}/transactions".format(accountId = accountId)
+        # response = requests.get(requestUrl, headers=headers, params = parameters)
+        # responseJson = response.json()
+        # sumTransactions = 0
+        # for item in responseJson['data']:
+        #     sumTransactions += item ['amount']
+        
+
+        # como a API com os dados do cliente ficou indisponível após o término do hackathon,
+        # vamos colocar os dados de um determinado cliente (o de CPF 595.080.896-84) 
+        # do banco de dados para podermos rodar a construção do portfólio
+
+        sumTransactions = 23013.09
+
         return sumTransactions
     
     def defineAmountToInvest(patrimony, totalAmountTransactions):
