@@ -35,8 +35,7 @@ def getAccountIdAPI(customerId,organizationId):
     requestUrl = "https://challenge.hackathonbtg.com/accounts/v1/accounts/"
     responseJson = requests.get(requestUrl, headers=headers)
     account = {}
-    # account['accountId'] = responseJson['data'][0]['accountId']
-    account['accountId'] = responseJson['data'][0]['personalId']
+    account['accountId'] = responseJson['data'][0]['accountId']
     return account
 
 @app.route("/getCreditCardAccountId/<customerId>/<organizationId>")

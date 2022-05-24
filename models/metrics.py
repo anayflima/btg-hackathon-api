@@ -15,7 +15,7 @@ class Metrics:
         responseJson = requests.get(requestUrl, headers=headers).json()
         print("responseJson")
         print(responseJson)
-        return responseJson['data'][0]['personalId']
+        return responseJson['data'][0]['accountId']
 
     def getCreditCardAccountId(customerId, organizationId):
         headers = {
